@@ -1,12 +1,22 @@
-```html
 <!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GhostStudy - Sanal Çalışma Arkadaşı</title>
+    
+    <!-- PWA / Mobil Uygulama Ayarları -->
+    <meta name="theme-color" content="#6C4DF6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GhostStudy">
+    
+    <!-- Dinamik Manifest (Uygulama Kimliği) -->
+    <link rel="manifest" id="manifestPlaceholder">
+    
     <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -42,15 +52,16 @@
         }
     </script>
     <!-- FontAwesome & Phosphor Icons for UI Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css)">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        @import url('[https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap](https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap)');
         
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: #F7F5FF;
             color: #2A2350;
             -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
 
         /* Custom Scrollbar */
@@ -222,7 +233,7 @@
             <!-- Add Task Card -->
             <div class="glass-card p-5 rounded-3xl space-y-3">
                 <h2 class="text-base font-bold text-inkApp">Yeni görev / ders</h2>
-                <input type="text" id="taskInput" placeholder="Örn. Mikroekonomi 4. bölüm tekrarı" class="w-full bg-bgApp border-0 rounded-2xl px-4 py-3 text-sm text-inkApp focus:ring-2 focus:ring-purpleApp outline-none font-medium placeholder-mutedApp">
+                <input type="text" id="taskInput" placeholder="Örn. Anestezi dersi tekrarı" class="w-full bg-bgApp border-0 rounded-2xl px-4 py-3 text-sm text-inkApp focus:ring-2 focus:ring-purpleApp outline-none font-medium placeholder-mutedApp">
                 
                 <!-- Category Selectors -->
                 <div class="flex flex-wrap gap-2">
@@ -358,13 +369,53 @@
         <span id="toastMsg">İşlem gerçekleştirildi.</span>
     </div>
 
+    <!-- PWA DYNAMIC MANIFEST & SERVICE WORKER INJECTION -->
+    <script>
+        // 1. Dinamik SVG Icon Oluşturma
+        const ghostSvgIcon = `data:image/svg+xml;utf8,<svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" viewBox="0 0 100 110" fill="%236C4DF6"><path d="M 10 90 L 10 42 A 40 40 0 0 1 90 42 L 90 90 Q 80 80 70 90 Q 60 100 50 90 Q 40 80 30 90 Q 20 100 10 90 Z" fill="%236C4DF6"/><circle cx="36" cy="44" r="6" fill="%23FFFFFF"/><circle cx="64" cy="44" r="6" fill="%23FFFFFF"/></svg>`;
+
+        // 2. Dinamik Manifest Dosyası Yükleme (Google Simgesi Olmadan Yüklemek İçin)
+        const manifestData = {
+            name: "GhostStudy",
+            short_name: "GhostStudy",
+            start_url: "./",
+            display: "standalone",
+            background_color: "#F7F5FF",
+            theme_color: "#6C4DF6",
+            icons: [
+                {
+                    src: ghostSvgIcon,
+                    sizes: "192x192 512x512",
+                    type: "image/svg+xml",
+                    purpose: "any maskable"
+                }
+            ]
+        };
+        const stringManifest = JSON.stringify(manifestData);
+        const blobManifest = new Blob([stringManifest], { type: 'application/json' });
+        const manifestURL = URL.createObjectURL(blobManifest);
+        document.getElementById('manifestPlaceholder').setAttribute('href', manifestURL);
+
+        // 3. Service Worker Kaydı (Çevrimdışı Çalışma ve Yükleme Özelliği İçin)
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener('install', (e) => self.skipWaiting());
+                self.addEventListener('activate', (e) => self.clients.claim());
+                self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request).catch(() => new Response("Offline"))));
+            `;
+            const blobSW = new Blob([swCode], { type: 'text/javascript' });
+            const swURL = URL.createObjectURL(blobSW);
+            navigator.serviceWorker.register(swURL).catch(() => {});
+        }
+    </script>
+
     <!-- JAVASCRIPT APPLICATION LOGIC -->
     <script>
         // STATE MANAGEMENT
         let state = {
             activeTab: 'odak',
             // Timer state
-            timerMode: '25-5', // '25-5', '50-10', 'custom'
+            timerMode: '25-5',
             focusMin: 25,
             breakMin: 5,
             customFocus: 40,
@@ -384,8 +435,8 @@
             // Tasks
             selectedCategory: 'Ders',
             tasks: [
-                { id: 1, title: 'Lineer Cebir: 3. ünite tekrarı', category: 'Ders', done: false },
-                { id: 2, title: 'Fizik laboratuvar raporu', category: 'Ödev', done: false }
+                { id: 1, title: 'Anestezi dersi tekrarı', category: 'Ders', done: false },
+                { id: 2, title: 'Siber Vatan modül hazırlığı', category: 'Ödev', done: false }
             ],
 
             // Notes
@@ -411,7 +462,6 @@
             updateTimerDisplay();
             updateStatsUI();
 
-            // Click ghost directly
             ghostContainer.addEventListener('click', heyGhost);
             btnHeyGhost.addEventListener('click', heyGhost);
         });
@@ -427,7 +477,7 @@
 
         function initTimeGreeting() {
             const h = new Date().getHours();
-            if (h < 5) greetingSub.innerText = 'Gece meaiye devam mı?';
+            if (h < 5) greetingSub.innerText = 'Gece mesaiye devam mı?';
             else if (h < 12) greetingSub.innerText = 'Verimli bir sabah dilerim!';
             else if (h < 18) greetingSub.innerText = 'Bugün neleri başaracağız?';
             else greetingSub.innerText = 'Günün yorgunluğunu dersle taçlandıralım!';
@@ -447,10 +497,9 @@
 
         function triggerGhostBounce() {
             ghostSvg.classList.remove('animate-bounceGhost');
-            void ghostSvg.offsetWidth; // Trigger reflow
+            void ghostSvg.offsetWidth;
             ghostSvg.classList.add('animate-bounceGhost');
 
-            // Excited mouth expression
             ghostMouth.setAttribute('d', 'M 43 50 Q 50 62 57 50 Z');
             ghostMouth.setAttribute('fill', '#2A2350');
 
@@ -501,7 +550,6 @@
                 pool.push(`Ela, ${state.notes.length} notun var; sınavdan önce göz atmayı unutma 📝`);
             }
 
-            // Filter out last message to avoid immediate repetition
             const filtered = pool.filter(m => m !== state.lastMsg);
             return filtered[Math.floor(Math.random() * filtered.length)] || pool[0];
         }
@@ -540,10 +588,9 @@
 
             document.getElementById('timerStatusSub').innerText = state.isFocusPhase ? 'Odaklan Ela 💜' : 'Mola zamanı ☕';
 
-            // Circular progress calculations
             const total = (state.isFocusPhase ? state.focusMin : state.breakMin) * 60;
             const progressRatio = (total - state.remainingSeconds) / total;
-            const circumference = 2 * Math.PI * 42; // r=42 -> ~263.89
+            const circumference = 2 * Math.PI * 42;
             const strokeOffset = circumference * (1 - progressRatio);
 
             const timerCircle = document.getElementById('timerProgress');
@@ -552,7 +599,7 @@
         }
 
         function setMode(mode) {
-            if (state.isRunning) toggleTimer(); // Pause current
+            if (state.isRunning) toggleTimer();
             state.timerMode = mode;
 
             if (mode === '25-5') {
@@ -569,7 +616,6 @@
             state.isFocusPhase = true;
             state.remainingSeconds = state.focusMin * 60;
 
-            // UI Mode Chip update
             ['25', '50', 'Custom'].forEach(m => {
                 const btn = document.getElementById(`btnMode${m}`);
                 if ((m === '25' && mode === '25-5') || (m === '50' && mode === '50-10') || (m === 'Custom' && mode === 'custom')) {
@@ -589,14 +635,12 @@
 
         function toggleTimer() {
             if (state.isRunning) {
-                // Pause
                 clearInterval(state.timerInterval);
                 state.isRunning = false;
                 document.getElementById('iconStartPause').className = 'fa-solid fa-play';
                 document.getElementById('textStartPause').innerText = 'Başlat';
                 updateGhostQuote('Duraklattık Ela. Hazır olunca devam ederiz ⏸️');
             } else {
-                // Start
                 state.isRunning = true;
                 document.getElementById('iconStartPause').className = 'fa-solid fa-pause';
                 document.getElementById('textStartPause').innerText = 'Duraklat';
@@ -777,7 +821,6 @@
             const doneContainer = document.getElementById('taskListDone');
             const completedWrapper = document.getElementById('completedTasksWrapper');
 
-            // Render Pending Tasks
             if (pendingList.length === 0 && doneList.length === 0) {
                 pendingContainer.innerHTML = `
                     <div class="glass-card p-6 rounded-3xl text-center space-y-2">
@@ -802,7 +845,6 @@
                 `).join('');
             }
 
-            // Render Completed Tasks
             if (doneList.length > 0) {
                 completedWrapper.classList.remove('hidden');
                 doneContainer.innerHTML = doneList.map(t => `
@@ -823,7 +865,6 @@
                 completedWrapper.classList.add('hidden');
             }
 
-            // Update Progress Bar
             const total = state.tasks.length;
             const doneCount = doneList.length;
             const ratio = total === 0 ? 0 : (doneCount / total) * 100;
@@ -978,4 +1019,4 @@
     </script>
 </body>
 </html>
-```
+
